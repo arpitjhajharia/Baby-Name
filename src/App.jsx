@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { db } from './firebase'
 import { doc, onSnapshot, collection } from 'firebase/firestore'
+import { AdminProvider, useAdmin } from './AdminContext'
 import IdentityScreen from './components/IdentityScreen'
 import SubmitScreen from './components/SubmitScreen'
 import VoteScreen from './components/VoteScreen'
 import DashboardScreen from './components/DashboardScreen'
+import AdminScreen from './components/AdminScreen'
+import AdminLoginModal from './components/AdminLoginModal'
 import BottomNav from './components/BottomNav'
 import WelcomeModal from './components/WelcomeModal'
 
@@ -17,7 +20,8 @@ function getUserId() {
   return id
 }
 
-export default function App() {
+function Main() {
+  const { isAdmin } = useAdmin()
   const [userId] = useState(getUserId)
   const [userData, setUserData] = useState(undefined)
   const [allUsers, setAllUsers] = useState([])
@@ -25,11 +29,7 @@ export default function App() {
   const [showWelcome, setShowWelcome] = useState(
     () => !localStorage.getItem('babyNameWelcomeSeen')
   )
-
-  const dismissWelcome = () => {
-    localStorage.setItem('babyNameWelcomeSeen', '1')
-    setShowWelcome(false)
-  }
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
 
   useEffect(() => {
     const unsubUser = onSnapshot(doc(db, 'users', userId), (snap) => {
@@ -43,9 +43,12 @@ export default function App() {
     return () => { unsubUser(); unsubAll() }
   }, [userId])
 
-  if (showWelcome) {
-    return <WelcomeModal onDismiss={dismissWelcome} />
+  const dismissWelcome = () => {
+    localStorage.setItem('babyNameWelcomeSeen', '1')
+    setShowWelcome(false)
   }
+
+  if (showWelcome) return <WelcomeModal onDismiss={dismissWelcome} />
 
   if (userData === undefined) {
     return (
@@ -60,23 +63,37 @@ export default function App() {
     )
   }
 
-  if (!userData?.name) {
-    return <IdentityScreen userId={userId} />
-  }
-
-  if (!userData?.hasSubmitted) {
-    return <SubmitScreen userId={userId} userName={userData.name} />
-  }
+  if (!userData?.name) return <IdentityScreen userId={userId} />
+  if (!userData?.hasSubmitted) return <SubmitScreen userId={userId} userName={userData.name} />
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showAdminLogin && <AdminLoginModal onClose={() => setShowAdminLogin(false)} />}
+
       {activeTab === 'vote' && (
         <VoteScreen userId={userId} userData={userData} allUsers={allUsers} />
       )}
       {activeTab === 'dashboard' && (
         <DashboardScreen allUsers={allUsers} />
       )}
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} hasVoted={userData?.hasVoted} />
+      {activeTab === 'admin' && isAdmin && (
+        <AdminScreen allUsers={allUsers} />
+      )}
+
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        hasVoted={userData?.hasVoted}
+        onAdminTap={() => setShowAdminLogin(true)}
+      />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AdminProvider>
+      <Main />
+    </AdminProvider>
   )
 }

@@ -1,3 +1,5 @@
+import { useAdmin } from '../AdminContext'
+
 function VoteIcon({ active }) {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
@@ -17,8 +19,19 @@ function DashboardIcon({ active }) {
   )
 }
 
-export default function BottomNav({ activeTab, setActiveTab, hasVoted }) {
-  const tabs = [
+function AdminIcon({ active }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0110 0v4" />
+    </svg>
+  )
+}
+
+export default function BottomNav({ activeTab, setActiveTab, hasVoted, onAdminTap }) {
+  const { isAdmin } = useAdmin()
+
+  const baseTabs = [
     { id: 'vote', label: 'Vote', Icon: VoteIcon },
     { id: 'dashboard', label: 'Results', Icon: DashboardIcon },
   ]
@@ -29,7 +42,7 @@ export default function BottomNav({ activeTab, setActiveTab, hasVoted }) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex">
-        {tabs.map(({ id, label, Icon }) => {
+        {baseTabs.map(({ id, label, Icon }) => {
           const active = activeTab === id
           return (
             <button
@@ -51,6 +64,25 @@ export default function BottomNav({ activeTab, setActiveTab, hasVoted }) {
             </button>
           )
         })}
+
+        {/* Admin tab — always visible but lock icon; shows panel if logged in */}
+        <button
+          onClick={() => {
+            if (isAdmin) {
+              setActiveTab('admin')
+            } else {
+              onAdminTap()
+            }
+          }}
+          className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 transition ${
+            activeTab === 'admin' && isAdmin ? 'text-violet-600' : 'text-gray-300'
+          }`}
+        >
+          <AdminIcon active={activeTab === 'admin' && isAdmin} />
+          <span className={`text-xs font-medium ${activeTab === 'admin' && isAdmin ? 'text-violet-600' : 'text-gray-300'}`}>
+            Admin
+          </span>
+        </button>
       </div>
     </div>
   )

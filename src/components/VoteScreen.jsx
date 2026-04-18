@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { useAdmin } from '../AdminContext'
 
 function toEntry(raw) {
   if (!raw) return null
@@ -8,7 +9,7 @@ function toEntry(raw) {
   return raw
 }
 
-function NameCard({ entry, submitters, selected, onSelect, color }) {
+function NameCard({ entry, submitters, selected, onSelect, color, showSubmitter }) {
   const { name, meaning } = entry
   const colors = {
     boy: {
@@ -35,7 +36,9 @@ function NameCard({ entry, submitters, selected, onSelect, color }) {
         {meaning ? (
           <p className="text-gray-500 text-xs mt-0.5 italic">{meaning}</p>
         ) : null}
-        <p className="text-gray-400 text-xs mt-0.5">by {submitters.join(', ')}</p>
+        {showSubmitter && (
+          <p className="text-gray-400 text-xs mt-0.5">by {submitters.join(', ')}</p>
+        )}
       </div>
     </button>
   )
@@ -56,6 +59,7 @@ function buildOptions(otherUsers, field) {
 }
 
 export default function VoteScreen({ userId, userData, allUsers }) {
+  const { isAdmin } = useAdmin()
   const otherUsers = allUsers.filter((u) => u.id !== userId && u.hasSubmitted)
   const boyOptions = buildOptions(otherUsers, 'boyNames')
   const girlOptions = buildOptions(otherUsers, 'girlNames')
@@ -131,6 +135,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
                   selected={boyVote.toLowerCase() === entry.name.toLowerCase()}
                   onSelect={setBoyVote}
                   color="boy"
+                  showSubmitter={isAdmin}
                 />
               ))
             )}
@@ -160,6 +165,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
                   selected={girlVote.toLowerCase() === entry.name.toLowerCase()}
                   onSelect={setGirlVote}
                   color="girl"
+                  showSubmitter={isAdmin}
                 />
               ))
             )}
