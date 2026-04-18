@@ -5,7 +5,7 @@ export default function WelcomeModal({ onDismiss }) {
         {/* Header */}
         <div className="bg-gradient-to-br from-violet-600 to-pink-500 px-6 pt-8 pb-6 text-center">
           <div className="text-5xl mb-3">👶</div>
-          <h1 className="text-white text-2xl font-bold">Baby Name Vote</h1>
+          <h1 className="text-white text-2xl font-bold">Venky and Aaru Baby Names</h1>
           <p className="text-white/80 text-sm mt-1">
             Venky &amp; Aaru's little one arrives in a week!
           </p>

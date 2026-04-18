@@ -31,7 +31,7 @@ export default function IdentityScreen({ userId }) {
         <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-6">
           <span className="text-5xl">👶</span>
         </div>
-        <h1 className="text-white text-3xl font-bold text-center mb-2">Baby Name Vote</h1>
+        <h1 className="text-white text-3xl font-bold text-center mb-2">Venky and Aaru Baby Names</h1>
         <p className="text-violet-200 text-center text-sm mb-12">
           Help choose the perfect name for our little one
         </p>
