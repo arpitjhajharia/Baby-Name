@@ -61,6 +61,8 @@ export default function SubmitScreen({ userId, userName }) {
   const validGirl = girlNames.filter((e) => e.name.trim()).length
   const canSubmit = validBoy >= 1 && validGirl >= 1
 
+  const [showSuccess, setShowSuccess] = useState(false)
+
   const handleSubmit = async () => {
     if (!canSubmit || saving) return
     setSaving(true)
@@ -76,6 +78,25 @@ export default function SubmitScreen({ userId, userName }) {
       hasSubmitted: true,
     })
     setSaving(false)
+    setShowSuccess(true)
+  }
+
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+        <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden text-center">
+          <div className="bg-gradient-to-br from-violet-600 to-pink-500 px-6 pt-6 pb-5">
+            <img src="/Baby-Name/Success Baby.gif" alt="" className="w-36 h-36 object-contain mx-auto rounded-2xl" />
+          </div>
+          <div className="px-6 py-6">
+            <h2 className="text-gray-900 text-xl font-bold mb-1">Names submitted!</h2>
+            <p className="text-gray-500 text-sm">
+              Your names are locked in. Now head over to the Vote tab to pick your favourites!
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

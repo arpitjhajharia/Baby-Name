@@ -3,11 +3,11 @@ export default function WelcomeModal({ onDismiss }) {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm px-4 pb-6 sm:pb-4">
       <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-br from-violet-600 to-pink-500 px-6 pt-8 pb-6 text-center">
-          <div className="text-5xl mb-3">👶</div>
+        <div className="bg-gradient-to-br from-violet-600 to-pink-500 px-6 pt-6 pb-6 text-center">
+          <img src="/Baby-Name/Load baby.gif" alt="" className="w-28 h-28 object-contain mx-auto mb-3 rounded-2xl" />
           <h1 className="text-white text-2xl font-bold">Venky and Aaru Baby Names</h1>
           <p className="text-white/80 text-sm mt-1">
-            Venky &amp; Aaru's little one arrives in a week!
+            Our little one arrives in a week!
           </p>
         </div>
 
