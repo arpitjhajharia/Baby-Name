@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAdmin } from '../AdminContext'
@@ -69,10 +69,25 @@ export default function VoteScreen({ userId, userData, allUsers }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Track whether user is actively editing so Firestore updates don't reset their in-progress selection
+  const isEditing = useRef(false)
+
   useEffect(() => {
-    setBoyVote(userData.boyVote || '')
-    setGirlVote(userData.girlVote || '')
+    if (!isEditing.current) {
+      setBoyVote(userData.boyVote || '')
+      setGirlVote(userData.girlVote || '')
+    }
   }, [userData.boyVote, userData.girlVote])
+
+  const handleSelectBoy = (name) => {
+    isEditing.current = true
+    setBoyVote(name)
+  }
+
+  const handleSelectGirl = (name) => {
+    isEditing.current = true
+    setGirlVote(name)
+  }
 
   const canVote = boyVote && girlVote
   const hasChanged = boyVote !== (userData.boyVote || '') || girlVote !== (userData.girlVote || '')
@@ -81,6 +96,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
     if (!canVote || saving) return
     setSaving(true)
     await updateDoc(doc(db, 'users', userId), { boyVote, girlVote, hasVoted: true })
+    isEditing.current = false
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -100,7 +116,9 @@ export default function VoteScreen({ userId, userData, allUsers }) {
               </span>
             )}
           </div>
-          <p className="text-violet-200 text-sm mt-1">Pick one boy name and one girl name</p>
+          <p className="text-violet-200 text-sm mt-1">
+            {userData.hasVoted ? 'Tap any name to change your vote' : 'Pick one boy name and one girl name'}
+          </p>
         </div>
       </div>
 
@@ -108,7 +126,9 @@ export default function VoteScreen({ userId, userData, allUsers }) {
         {saved && (
           <div className="bg-green-50 border border-green-100 rounded-2xl px-4 py-3 flex items-center gap-2">
             <span className="text-green-500 text-lg">✓</span>
-            <p className="text-green-700 text-sm font-medium">Your vote has been saved!</p>
+            <p className="text-green-700 text-sm font-medium">
+              {hasChanged ? 'Vote updated!' : 'Vote saved!'}
+            </p>
           </div>
         )}
 
@@ -120,7 +140,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
             </div>
             <div>
               <p className="text-sky-700 font-semibold text-sm">Boy Names</p>
-              <p className="text-sky-500 text-xs">{boyVote ? `Voted: ${boyVote}` : 'Tap to select'}</p>
+              <p className="text-sky-500 text-xs">{boyVote ? `Selected: ${boyVote}` : 'Tap to select'}</p>
             </div>
           </div>
           <div className="px-4 py-3 space-y-2">
@@ -133,7 +153,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
                   entry={entry}
                   submitters={submitters}
                   selected={boyVote.toLowerCase() === entry.name.toLowerCase()}
-                  onSelect={setBoyVote}
+                  onSelect={handleSelectBoy}
                   color="boy"
                   showSubmitter={isAdmin}
                 />
@@ -150,7 +170,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
             </div>
             <div>
               <p className="text-pink-700 font-semibold text-sm">Girl Names</p>
-              <p className="text-pink-500 text-xs">{girlVote ? `Voted: ${girlVote}` : 'Tap to select'}</p>
+              <p className="text-pink-500 text-xs">{girlVote ? `Selected: ${girlVote}` : 'Tap to select'}</p>
             </div>
           </div>
           <div className="px-4 py-3 space-y-2">
@@ -163,7 +183,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
                   entry={entry}
                   submitters={submitters}
                   selected={girlVote.toLowerCase() === entry.name.toLowerCase()}
-                  onSelect={setGirlVote}
+                  onSelect={handleSelectGirl}
                   color="girl"
                   showSubmitter={isAdmin}
                 />
@@ -185,7 +205,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
         {userData.hasVoted && !hasChanged && (
           <div className="bg-violet-50 rounded-2xl px-4 py-4 text-center">
             <p className="text-violet-700 font-medium text-sm">Vote submitted!</p>
-            <p className="text-violet-500 text-xs mt-0.5">Tap any name above to change your vote</p>
+            <p className="text-violet-500 text-xs mt-0.5">You can tap any name above to change your vote</p>
           </div>
         )}
 
