@@ -70,7 +70,10 @@ function Main() {
   return (
     <div className="min-h-screen bg-gray-50">
       {showSubmitSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+          onClick={() => setShowSubmitSuccess(false)}
+        >
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden text-center">
             <div className="bg-gradient-to-br from-violet-600 to-pink-500 px-6 pt-6 pb-5">
               <img src="/Baby-Name/Success Baby.gif" alt="" className="w-36 h-36 object-contain mx-auto rounded-2xl" />
@@ -80,6 +83,7 @@ function Main() {
               <p className="text-gray-500 text-sm">
                 Your names are locked in. Now head over to the Vote tab to pick your favourites!
               </p>
+              <p className="text-gray-300 text-xs mt-3">Tap anywhere to continue</p>
             </div>
           </div>
         </div>
