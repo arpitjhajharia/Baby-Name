@@ -1,22 +1,28 @@
 const MEDALS = ['🥇', '🥈', '🥉']
 
-function RankRow({ rank, name, votes, maxVotes, color }) {
+function toEntry(raw) {
+  if (!raw) return null
+  if (typeof raw === 'string') return { name: raw, meaning: '' }
+  return raw
+}
+
+function RankRow({ rank, name, meaning, votes, maxVotes, color }) {
   const pct = maxVotes > 0 ? (votes / maxVotes) * 100 : 0
-  const barColors = {
-    boy: 'bg-sky-400',
-    girl: 'bg-pink-400',
-  }
+  const barColors = { boy: 'bg-sky-400', girl: 'bg-pink-400' }
 
   return (
     <div className="flex items-center gap-3 py-3">
       <span className="text-2xl w-8 text-center flex-shrink-0">{MEDALS[rank]}</span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-baseline justify-between mb-0.5">
           <p className="text-gray-900 font-semibold text-base truncate">{name}</p>
           <span className="text-gray-500 text-sm ml-2 flex-shrink-0">
             {votes} {votes === 1 ? 'vote' : 'votes'}
           </span>
         </div>
+        {meaning ? (
+          <p className="text-gray-400 text-xs italic mb-1 truncate">{meaning}</p>
+        ) : null}
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${barColors[color]}`}
@@ -29,28 +35,26 @@ function RankRow({ rank, name, votes, maxVotes, color }) {
 }
 
 export default function DashboardScreen({ allUsers }) {
-  const boyVotes = {}
-  const girlVotes = {}
-
+  // Build a meaning lookup from all submitted names
+  const meaningLookup = {}
   allUsers.forEach((user) => {
-    if (user.boyVote) {
-      const key = user.boyVote.trim()
-      boyVotes[key] = (boyVotes[key] || 0) + 1
-    }
-    if (user.girlVote) {
-      const key = user.girlVote.trim()
-      girlVotes[key] = (girlVotes[key] || 0) + 1
-    }
+    ;[...(user.boyNames || []), ...(user.girlNames || [])].forEach((raw) => {
+      const e = toEntry(raw)
+      if (e?.name && e.meaning) {
+        meaningLookup[e.name.trim().toLowerCase()] = e.meaning
+      }
+    })
   })
 
-  const topBoy = Object.entries(boyVotes)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
+  const boyVotes = {}
+  const girlVotes = {}
+  allUsers.forEach((user) => {
+    if (user.boyVote) boyVotes[user.boyVote.trim()] = (boyVotes[user.boyVote.trim()] || 0) + 1
+    if (user.girlVote) girlVotes[user.girlVote.trim()] = (girlVotes[user.girlVote.trim()] || 0) + 1
+  })
 
-  const topGirl = Object.entries(girlVotes)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-
+  const topBoy = Object.entries(boyVotes).sort((a, b) => b[1] - a[1]).slice(0, 3)
+  const topGirl = Object.entries(girlVotes).sort((a, b) => b[1] - a[1]).slice(0, 3)
   const maxBoy = topBoy[0]?.[1] || 0
   const maxGirl = topGirl[0]?.[1] || 0
   const totalVoters = allUsers.filter((u) => u.hasVoted).length
@@ -94,7 +98,9 @@ export default function DashboardScreen({ allUsers }) {
             </div>
             <div>
               <p className="text-sky-700 font-semibold text-sm">Top Boy Names</p>
-              <p className="text-sky-500 text-xs">{topBoy.length > 0 ? `${topBoy.length} name${topBoy.length !== 1 ? 's' : ''} leading` : 'No votes yet'}</p>
+              <p className="text-sky-500 text-xs">
+                {topBoy.length > 0 ? `${topBoy.length} name${topBoy.length !== 1 ? 's' : ''} leading` : 'No votes yet'}
+              </p>
             </div>
           </div>
           <div className="px-5 divide-y divide-gray-50">
@@ -102,7 +108,15 @@ export default function DashboardScreen({ allUsers }) {
               <p className="text-gray-400 text-sm text-center py-6">Cast the first vote!</p>
             ) : (
               topBoy.map(([name, votes], i) => (
-                <RankRow key={name} rank={i} name={name} votes={votes} maxVotes={maxBoy} color="boy" />
+                <RankRow
+                  key={name}
+                  rank={i}
+                  name={name}
+                  meaning={meaningLookup[name.toLowerCase()] || ''}
+                  votes={votes}
+                  maxVotes={maxBoy}
+                  color="boy"
+                />
               ))
             )}
           </div>
@@ -116,7 +130,9 @@ export default function DashboardScreen({ allUsers }) {
             </div>
             <div>
               <p className="text-pink-700 font-semibold text-sm">Top Girl Names</p>
-              <p className="text-pink-500 text-xs">{topGirl.length > 0 ? `${topGirl.length} name${topGirl.length !== 1 ? 's' : ''} leading` : 'No votes yet'}</p>
+              <p className="text-pink-500 text-xs">
+                {topGirl.length > 0 ? `${topGirl.length} name${topGirl.length !== 1 ? 's' : ''} leading` : 'No votes yet'}
+              </p>
             </div>
           </div>
           <div className="px-5 divide-y divide-gray-50">
@@ -124,7 +140,15 @@ export default function DashboardScreen({ allUsers }) {
               <p className="text-gray-400 text-sm text-center py-6">Cast the first vote!</p>
             ) : (
               topGirl.map(([name, votes], i) => (
-                <RankRow key={name} rank={i} name={name} votes={votes} maxVotes={maxGirl} color="girl" />
+                <RankRow
+                  key={name}
+                  rank={i}
+                  name={name}
+                  meaning={meaningLookup[name.toLowerCase()] || ''}
+                  votes={votes}
+                  maxVotes={maxGirl}
+                  color="girl"
+                />
               ))
             )}
           </div>

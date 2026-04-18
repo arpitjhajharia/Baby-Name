@@ -2,17 +2,22 @@ import { useState, useEffect } from 'react'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
-function NameCard({ name, submitters, selected, onSelect, color }) {
+function toEntry(raw) {
+  if (!raw) return null
+  if (typeof raw === 'string') return { name: raw, meaning: '' }
+  return raw
+}
+
+function NameCard({ entry, submitters, selected, onSelect, color }) {
+  const { name, meaning } = entry
   const colors = {
     boy: {
       ring: selected ? 'ring-2 ring-sky-500 bg-sky-50' : 'ring-1 ring-gray-100 bg-white',
       dot: selected ? 'bg-sky-500' : 'bg-gray-200',
-      text: 'text-sky-600',
     },
     girl: {
       ring: selected ? 'ring-2 ring-pink-500 bg-pink-50' : 'ring-1 ring-gray-100 bg-white',
       dot: selected ? 'bg-pink-500' : 'bg-gray-200',
-      text: 'text-pink-600',
     },
   }
   const c = colors[color]
@@ -20,41 +25,40 @@ function NameCard({ name, submitters, selected, onSelect, color }) {
   return (
     <button
       onClick={() => onSelect(name)}
-      className={`w-full rounded-2xl px-4 py-4 flex items-center gap-3 transition active:scale-95 ${c.ring}`}
+      className={`w-full rounded-2xl px-4 py-4 flex items-start gap-3 transition active:scale-95 ${c.ring}`}
     >
-      <div className={`w-5 h-5 rounded-full flex-shrink-0 transition ${c.dot} flex items-center justify-center`}>
+      <div className={`w-5 h-5 rounded-full flex-shrink-0 mt-0.5 transition ${c.dot} flex items-center justify-center`}>
         {selected && <div className="w-2 h-2 bg-white rounded-full" />}
       </div>
       <div className="flex-1 text-left">
         <p className="text-gray-900 font-semibold text-base">{name}</p>
+        {meaning ? (
+          <p className="text-gray-500 text-xs mt-0.5 italic">{meaning}</p>
+        ) : null}
         <p className="text-gray-400 text-xs mt-0.5">by {submitters.join(', ')}</p>
       </div>
     </button>
   )
 }
 
-export default function VoteScreen({ userId, userData, allUsers }) {
-  const otherUsers = allUsers.filter((u) => u.id !== userId && u.hasSubmitted)
-
-  const boyMap = {}
-  const girlMap = {}
+function buildOptions(otherUsers, field) {
+  const map = {}
   otherUsers.forEach((user) => {
-    user.boyNames?.forEach((name) => {
-      if (!name?.trim()) return
-      const key = name.trim().toLowerCase()
-      if (!boyMap[key]) boyMap[key] = { name: name.trim(), submitters: [] }
-      if (!boyMap[key].submitters.includes(user.name)) boyMap[key].submitters.push(user.name)
-    })
-    user.girlNames?.forEach((name) => {
-      if (!name?.trim()) return
-      const key = name.trim().toLowerCase()
-      if (!girlMap[key]) girlMap[key] = { name: name.trim(), submitters: [] }
-      if (!girlMap[key].submitters.includes(user.name)) girlMap[key].submitters.push(user.name)
+    user[field]?.forEach((raw) => {
+      const entry = toEntry(raw)
+      if (!entry?.name?.trim()) return
+      const key = entry.name.trim().toLowerCase()
+      if (!map[key]) map[key] = { entry: { name: entry.name.trim(), meaning: entry.meaning || '' }, submitters: [] }
+      if (!map[key].submitters.includes(user.name)) map[key].submitters.push(user.name)
     })
   })
+  return Object.values(map).sort((a, b) => a.entry.name.localeCompare(b.entry.name))
+}
 
-  const boyOptions = Object.values(boyMap).sort((a, b) => a.name.localeCompare(b.name))
-  const girlOptions = Object.values(girlMap).sort((a, b) => a.name.localeCompare(b.name))
+export default function VoteScreen({ userId, userData, allUsers }) {
+  const otherUsers = allUsers.filter((u) => u.id !== userId && u.hasSubmitted)
+  const boyOptions = buildOptions(otherUsers, 'boyNames')
+  const girlOptions = buildOptions(otherUsers, 'girlNames')
 
   const [boyVote, setBoyVote] = useState(userData.boyVote || '')
   const [girlVote, setGirlVote] = useState(userData.girlVote || '')
@@ -72,11 +76,7 @@ export default function VoteScreen({ userId, userData, allUsers }) {
   const handleVote = async () => {
     if (!canVote || saving) return
     setSaving(true)
-    await updateDoc(doc(db, 'users', userId), {
-      boyVote,
-      girlVote,
-      hasVoted: true,
-    })
+    await updateDoc(doc(db, 'users', userId), { boyVote, girlVote, hasVoted: true })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -116,23 +116,19 @@ export default function VoteScreen({ userId, userData, allUsers }) {
             </div>
             <div>
               <p className="text-sky-700 font-semibold text-sm">Boy Names</p>
-              <p className="text-sky-500 text-xs">
-                {boyVote ? `Voted: ${boyVote}` : 'Tap to select'}
-              </p>
+              <p className="text-sky-500 text-xs">{boyVote ? `Voted: ${boyVote}` : 'Tap to select'}</p>
             </div>
           </div>
           <div className="px-4 py-3 space-y-2">
             {boyOptions.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-4">
-                No boy names submitted by others yet
-              </p>
+              <p className="text-gray-400 text-sm text-center py-4">No boy names submitted by others yet</p>
             ) : (
-              boyOptions.map(({ name, submitters }) => (
+              boyOptions.map(({ entry, submitters }) => (
                 <NameCard
-                  key={name}
-                  name={name}
+                  key={entry.name}
+                  entry={entry}
                   submitters={submitters}
-                  selected={boyVote.toLowerCase() === name.toLowerCase()}
+                  selected={boyVote.toLowerCase() === entry.name.toLowerCase()}
                   onSelect={setBoyVote}
                   color="boy"
                 />
@@ -149,23 +145,19 @@ export default function VoteScreen({ userId, userData, allUsers }) {
             </div>
             <div>
               <p className="text-pink-700 font-semibold text-sm">Girl Names</p>
-              <p className="text-pink-500 text-xs">
-                {girlVote ? `Voted: ${girlVote}` : 'Tap to select'}
-              </p>
+              <p className="text-pink-500 text-xs">{girlVote ? `Voted: ${girlVote}` : 'Tap to select'}</p>
             </div>
           </div>
           <div className="px-4 py-3 space-y-2">
             {girlOptions.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-4">
-                No girl names submitted by others yet
-              </p>
+              <p className="text-gray-400 text-sm text-center py-4">No girl names submitted by others yet</p>
             ) : (
-              girlOptions.map(({ name, submitters }) => (
+              girlOptions.map(({ entry, submitters }) => (
                 <NameCard
-                  key={name}
-                  name={name}
+                  key={entry.name}
+                  entry={entry}
                   submitters={submitters}
-                  selected={girlVote.toLowerCase() === name.toLowerCase()}
+                  selected={girlVote.toLowerCase() === entry.name.toLowerCase()}
                   onSelect={setGirlVote}
                   color="girl"
                 />
