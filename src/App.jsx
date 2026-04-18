@@ -6,6 +6,7 @@ import SubmitScreen from './components/SubmitScreen'
 import VoteScreen from './components/VoteScreen'
 import DashboardScreen from './components/DashboardScreen'
 import BottomNav from './components/BottomNav'
+import WelcomeModal from './components/WelcomeModal'
 
 function getUserId() {
   let id = localStorage.getItem('babyNameUserId')
@@ -21,6 +22,14 @@ export default function App() {
   const [userData, setUserData] = useState(undefined)
   const [allUsers, setAllUsers] = useState([])
   const [activeTab, setActiveTab] = useState('vote')
+  const [showWelcome, setShowWelcome] = useState(
+    () => !localStorage.getItem('babyNameWelcomeSeen')
+  )
+
+  const dismissWelcome = () => {
+    localStorage.setItem('babyNameWelcomeSeen', '1')
+    setShowWelcome(false)
+  }
 
   useEffect(() => {
     const unsubUser = onSnapshot(doc(db, 'users', userId), (snap) => {
@@ -33,6 +42,10 @@ export default function App() {
     })
     return () => { unsubUser(); unsubAll() }
   }, [userId])
+
+  if (showWelcome) {
+    return <WelcomeModal onDismiss={dismissWelcome} />
+  }
 
   if (userData === undefined) {
     return (
