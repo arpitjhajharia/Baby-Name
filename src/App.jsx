@@ -33,14 +33,20 @@ function Main() {
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
 
   useEffect(() => {
-    const unsubUser = onSnapshot(doc(db, 'users', userId), (snap) => {
-      setUserData(snap.exists() ? { id: snap.id, ...snap.data() } : null)
-    })
-    const unsubAll = onSnapshot(collection(db, 'users'), (snap) => {
-      const users = []
-      snap.forEach((d) => users.push({ id: d.id, ...d.data() }))
-      setAllUsers(users)
-    })
+    const unsubUser = onSnapshot(
+      doc(db, 'users', userId),
+      (snap) => setUserData(snap.exists() ? { id: snap.id, ...snap.data() } : null),
+      () => setUserData(null)
+    )
+    const unsubAll = onSnapshot(
+      collection(db, 'users'),
+      (snap) => {
+        const users = []
+        snap.forEach((d) => users.push({ id: d.id, ...d.data() }))
+        setAllUsers(users)
+      },
+      () => {}
+    )
     return () => { unsubUser(); unsubAll() }
   }, [userId])
 
@@ -92,6 +98,16 @@ function Main() {
 
       {activeTab === 'vote' && (
         <VoteScreen userId={userId} userData={userData} allUsers={allUsers} />
+      )}
+      {activeTab === 'names' && (
+        <SubmitScreen
+          userId={userId}
+          userName={userData.name}
+          onSubmitted={() => setShowSubmitSuccess(true)}
+          existingBoyNames={userData.boyNames || []}
+          existingGirlNames={userData.girlNames || []}
+          isAddMode={true}
+        />
       )}
       {activeTab === 'dashboard' && (
         <DashboardScreen allUsers={allUsers} />

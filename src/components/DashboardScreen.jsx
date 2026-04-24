@@ -93,8 +93,8 @@ export default function DashboardScreen({ allUsers }) {
         {/* Boy Rankings */}
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
           <div className="bg-sky-50 px-5 py-4 flex items-center gap-3">
-            <div className="w-9 h-9 bg-sky-100 rounded-xl flex items-center justify-center">
-              <span className="text-xl">👦</span>
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
+              <img src="/Baby-Name/Boy.gif" alt="Boy" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="text-sky-700 font-semibold text-sm">Top Boy Names</p>
@@ -125,8 +125,8 @@ export default function DashboardScreen({ allUsers }) {
         {/* Girl Rankings */}
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
           <div className="bg-pink-50 px-5 py-4 flex items-center gap-3">
-            <div className="w-9 h-9 bg-pink-100 rounded-xl flex items-center justify-center">
-              <span className="text-xl">👧</span>
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
+              <img src="/Baby-Name/Girl.gif" alt="Girl" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="text-pink-700 font-semibold text-sm">Top Girl Names</p>
